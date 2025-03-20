@@ -1,24 +1,28 @@
+#!/bin/bash
+#echo "Hosts disponibles:"
+#
+#cat /etc/hosts
+
 echo "Validacion del echo server con netcat"
 
 PORT=$(grep '^SERVER_PORT' "./server/config.ini" | awk -F'=' '{print $2}' | tr -d ' ')
 IP=$(grep '^SERVER_IP' "./server/config.ini" | awk -F'=' '{print $2}' | tr -d ' ')
-
-echo "Server hostname: $IP. Resolviendo IP,"
-
-#if ! [[ "$IP" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-#    IP=$(getent hosts "$IP" | awk '{print $1}')
-#fi
+MESSAGE="Hola mundo"
+NETWORK_NAME=$(docker network ls --format '{{.Name}}' | grep testing_net)
 
 echo "Server: $IP:$PORT"
+echo "La red del server es: $NETWORK_NAME"
 
-echo "Enviando mensaje <Hola mundo>"
+echo "Construyendo contenedor para ejecutar netcat"
 
+docker build -f ./netcat/Dockerfile -t netcat .
 
+echo "Enviando mensaje <$MESSAGE>"
+RESPONSE=$(docker run --rm --network="$NETWORK_NAME" netcat sh -c "echo 'Hola mundo' | nc -w 2 '$IP' '$PORT'")
+echo "Respuesta del servidor: $RESPONSE"
 
-RESPONSE=$(echo "$MESSAGE" | nc -w 2 "$IP" "$PORT")
-
-if [[ "$RESPONSE" == "$MESSAGE" ]]; then
-    echo "action: test_echo_server | result: success"
+if [ "$RESPONSE" = "$MESSAGE" ]; then
+  echo "action: test_echo_server | result: success"
 else
-    echo "action: test_echo_server | result: fail"
+  echo "action: test_echo_server | result: fail"
 fi
