@@ -197,3 +197,9 @@ sudo chmod +x ./generar-compose.sh
 ```
 
 El script de python mencionado utiliza la libreria `yaml` iterando sobre una plantilla completando los campos necesarios.
+
+### Ejercicio N°2:
+
+Se agrega al script de python para agregar la configuración de volúmenes al docker compose. Se montan directamente los archivos
+de configuración a una ruta dentro de cada contenedor. Docker monta cada vez que se levanta un contenedor dicho archivo,
+evitando tener que reconstruir la imagen cada vez que se cambie una configuración.
