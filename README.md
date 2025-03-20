@@ -203,3 +203,21 @@ El script de python mencionado utiliza la libreria `yaml` iterando sobre una pla
 Se agrega al script de python para agregar la configuración de volúmenes al docker compose. Se montan directamente los archivos
 de configuración a una ruta dentro de cada contenedor. Docker monta cada vez que se levanta un contenedor dicho archivo,
 evitando tener que reconstruir la imagen cada vez que se cambie una configuración.
+
+### Ejercicio N°3:
+
+Se crea una nueva imagen y contenedor minima para permitir correr netcat. Se utiliza con una imagen liviana `alpine:latest`
+a la cual se le instala `netcat-openbsd`. Se agrega la configuración necesaria al Makefile y se crea un script de ejecución
+de validación `validar-echo-server.sh`. Este script parsea de las configuraciones la dirección y puerto, obtiene el nombre 
+de la red levantada en Docker, construye la imagen de Docker y ejecuta el servidor enviandole un comando de netcat.
+Finalmente, compara la respuesta e imprime lo necesario. Para correrlo se ejecuta:
+
+```shell
+./validar-echo-server.sh
+```
+
+Puede requerir modificar los permisos al igual que el ejercicio 1:
+
+```shell
+sudo chmod +x ./validar-echo-server.sh
+```
