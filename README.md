@@ -221,3 +221,26 @@ Puede requerir modificar los permisos al igual que el ejercicio 1:
 ```shell
 sudo chmod +x ./validar-echo-server.sh
 ```
+
+### Ejercicio N°3:
+Se agregan los handlers para la señal sigterm. Python provee una interfaz para setear una funcion que se llamara en el caso de 
+obtener dicha señal. Luego se le añade el comportamiento necesario a dicho handler para cerrar los recursos:
+
+```python
+signal.signal(signal.SIGTERM, self.handle_sigterm)
+```
+
+En Golang se levanta una funcion asincrona que espera que en un canal se reciba la señal sigterm:
+
+```go
+	<-sigChannel
+	log.Infof("action: handle_sigterm | result: success | client_id: %v", c.config.ID)
+...
+```
+
+y para crear el canal:
+
+```go
+    sigChannel := make(chan os.Signal, 1)
+	signal.Notify(sigChannel, syscall.SIGTERM)
+```
