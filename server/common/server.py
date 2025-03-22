@@ -1,10 +1,14 @@
+import errno
 import socket
 import logging
-
+import signal
 
 class Server:
     def __init__(self, port, listen_backlog):
+        # Set SIGTERM handler
+        signal.signal(signal.SIGTERM, self.handle_sigterm)
         # Initialize server socket
+        self.running = True
         self._server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self._server_socket.bind(('', port))
         self._server_socket.listen(listen_backlog)
@@ -20,11 +24,21 @@ class Server:
 
         # TODO: Modify this program to handle signal to graceful shutdown
         # the server
-        while True:
-            client_sock = self.__accept_new_connection()
-            self.__handle_client_connection(client_sock)
+        while self.running:
+            try:
+                client_sock = self.__accept_new_connection()
+                self.__handle_client_connection(client_sock)
+            except socket.error as e:
+                if e.errno == errno.EBADF:
+                    logging.error(f'action: accept_new_connection | result: success | detail: closed connection')
+                else:
+                    logging.error(f'action: accept_new_connection | result: error | error: {e}')
+                return
 
-    def __handle_client_connection(self, client_sock):
+        self.__close_server_socket()
+
+    @staticmethod
+    def __handle_client_connection(client_sock):
         """
         Read message from a specific client socket and closes the socket
 
@@ -43,6 +57,13 @@ class Server:
         finally:
             client_sock.close()
 
+    def __close_server_socket(self):
+        if self._server_socket is None:
+            return
+        self._server_socket.shutdown(socket.SHUT_RDWR)
+        self._server_socket.close()
+        self._server_socket = None
+
     def __accept_new_connection(self):
         """
         Accept new connections
@@ -56,3 +77,8 @@ class Server:
         c, addr = self._server_socket.accept()
         logging.info(f'action: accept_connections | result: success | ip: {addr[0]}')
         return c
+
+    def handle_sigterm(self, signum, frame):
+        logging.info('Shutting server gracefully with SIGTERM')
+        self.running = False
+        self.__close_server_socket()
