@@ -244,3 +244,22 @@ y para crear el canal:
     sigChannel := make(chan os.Signal, 1)
 	signal.Notify(sigChannel, syscall.SIGTERM)
 ```
+
+### Ejercicio N°5:
+
+Se agrega al docker-compose-generator las variables de entorno.
+El protocolo que se usa es:
+1. Se envia desde el cliente un string de la forma 
+2. 
+```text
+id_cliente,nombre,apellido,documento,nacimiento,numero\n
+```
+ejemplo:
+```text
+1,Luciana Maria,Gomez,32567892,2000-07-21,8632\n
+```
+El servidor lee hasta encontrar un carater de salto de linea evitando el short read, parsea la respuesta utilizando las comas y utiliza la uncion provsta para persistirla.
+
+Para evitar short writes se valida que la cantidad de caracteres enviada corresponda con el largo del string, sino reintentando con las porciones que faltan.
+
+
