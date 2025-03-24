@@ -3,6 +3,10 @@ import socket
 import logging
 import signal
 
+from common.utils import Bet, store_bets
+from common.quiniela import Quiniela
+
+
 class Server:
     def __init__(self, port, listen_backlog):
         # Set SIGTERM handler
@@ -12,6 +16,7 @@ class Server:
         self._server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self._server_socket.bind(('', port))
         self._server_socket.listen(listen_backlog)
+        self.quiniela = Quiniela()
 
     def run(self):
         """
@@ -21,9 +26,7 @@ class Server:
         communication with a client. After client with communucation
         finishes, servers starts to accept new connections again
         """
-
-        # TODO: Modify this program to handle signal to graceful shutdown
-        # the server
+        
         while self.running:
             try:
                 client_sock = self.__accept_new_connection()
@@ -46,16 +49,37 @@ class Server:
         client socket will also be closed
         """
         try:
-            # TODO: Modify the receive to avoid short-reads
-            msg = client_sock.recv(1024).rstrip().decode('utf-8')
+            msg = Server.recv(client_sock)
             addr = client_sock.getpeername()
             logging.info(f'action: receive_message | result: success | ip: {addr[0]} | msg: {msg}')
-            # TODO: Modify the send to avoid short-writes
-            client_sock.send("{}\n".format(msg).encode('utf-8'))
+            fields = msg.split(",")
+            Quiniela.register_bet(fields[0], fields[1], fields[2], fields[3], fields[4], fields[5])
         except OSError as e:
             logging.error("action: receive_message | result: fail | error: {e}")
         finally:
             client_sock.close()
+
+    @staticmethod
+    def recv(client_sock):
+        data = b""
+        while True:
+            chunk = client_sock.recv(1024)
+            if not chunk:
+                break
+            data += chunk
+            if b'\n' in chunk:
+                break
+        return data.rstrip().decode('utf-8')  # Remove trailing newlines/spaces
+
+    @staticmethod
+    def send(client_sock, msg):
+        data = (msg + "\n").encode('utf-8')
+        total_sent = 0
+        while total_sent < len(data):
+            sent = client_sock.send(data[total_sent:])
+            if sent == 0:
+                raise RuntimeError("Socket connection broken")
+            total_sent += sent
 
     def __close_server_socket(self):
         if self._server_socket is None:

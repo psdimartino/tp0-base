@@ -36,7 +36,12 @@ def generate_docker_yaml(clients):
             "image": "client:latest",
             "entrypoint": "/client",
             "environment": [
-                f"CLI_ID={i}"
+                f"CLI_ID={i}",
+                "CLI_BET_NOMBRE=Luciana Maria",
+                "CLI_BET_APELLIDO=Gomez",
+                "CLI_BET_DOCUMENTO=32567892",
+                "CLI_BET_NACIMIENTO=2000-07-21",
+                "CLI_BET_NUMERO=8632"
             ],
             "networks": ["testing_net"],
             "volumes": ["./client/config.yaml:/config.yaml"],
