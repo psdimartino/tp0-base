@@ -13,16 +13,13 @@ services:
     entrypoint: /client
     environment:
     - CLI_ID=1
-    - CLI_BET_NOMBRE=Luciana Maria
-    - CLI_BET_APELLIDO=Gomez
-    - CLI_BET_DOCUMENTO=32567892
-    - CLI_BET_NACIMIENTO=2000-07-21
-    - CLI_BET_NUMERO=8632
+    - CLI_BET_PATH=./dataset.csv
     image: client:latest
     networks:
     - testing_net
     volumes:
     - ./client/config.yaml:/config.yaml
+    - ./.data/agency-1.csv:/dataset.csv
   server:
     container_name: server
     entrypoint: python3 /main.py

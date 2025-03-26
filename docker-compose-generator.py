@@ -37,14 +37,13 @@ def generate_docker_yaml(clients):
             "entrypoint": "/client",
             "environment": [
                 f"CLI_ID={i}",
-                "CLI_BET_NOMBRE=Luciana Maria",
-                "CLI_BET_APELLIDO=Gomez",
-                "CLI_BET_DOCUMENTO=32567892",
-                "CLI_BET_NACIMIENTO=2000-07-21",
-                "CLI_BET_NUMERO=8632"
+                "CLI_BET_PATH=./dataset.csv",
             ],
             "networks": ["testing_net"],
-            "volumes": ["./client/config.yaml:/config.yaml"],
+            "volumes": [
+                "./client/config.yaml:/config.yaml",
+                f"./.data/agency-{i}.csv:/dataset.csv"
+            ],
             "depends_on": ["server"]
         }
 

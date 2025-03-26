@@ -26,7 +26,7 @@ class Server:
         communication with a client. After client with communucation
         finishes, servers starts to accept new connections again
         """
-        
+
         while self.running:
             try:
                 client_sock = self.__accept_new_connection()
@@ -48,14 +48,18 @@ class Server:
         If a problem arises in the communication with the client, the
         client socket will also be closed
         """
+        bet_amount = 0
         try:
-            msg = Server.recv(client_sock)
-            addr = client_sock.getpeername()
-            logging.info(f'action: receive_message | result: success | ip: {addr[0]} | msg: {msg}')
-            fields = msg.split(",")
-            Quiniela.register_bet(fields[0], fields[1], fields[2], fields[3], fields[4], fields[5])
+            while True:
+                msg = Server.recv(client_sock)
+                logging.info(f'action: mensaje_recibido | result: success | msg: {msg}')
+                if msg == "end":
+                    break
+                Quiniela.register_bets(msg)
+                Server.send(client_sock, "ok\n")
+
         except OSError as e:
-            logging.error("action: receive_message | result: fail | error: {e}")
+            logging.info(f'action: mensaje_recibido | result: fail | error: {e}')
         finally:
             client_sock.close()
 
@@ -63,13 +67,14 @@ class Server:
     def recv(client_sock):
         data = b""
         while True:
-            chunk = client_sock.recv(1024)
+            chunk = client_sock.recv(80000)
             if not chunk:
                 break
             data += chunk
-            if b'\n' in chunk:
+            if b"\n\n" in chunk:
+                logging.info(f'action: message_end_received | result: success')
                 break
-        return data.rstrip().decode('utf-8')  # Remove trailing newlines/spaces
+        return data.rstrip().decode()  # Remove trailing newlines/spaces
 
     @staticmethod
     def send(client_sock, msg):
