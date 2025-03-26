@@ -262,4 +262,17 @@ El servidor lee hasta encontrar un carater de salto de linea evitando el short r
 
 Para evitar short writes se valida que la cantidad de caracteres enviada corresponda con el largo del string, sino reintentando con las porciones que faltan.
 
+### Ejercicio N°6:
 
+Para el protocolo por batch, se modifica el protocolo anterior para enviar un doble salto de linea al final de cada batch y un
+salto de linea simple entre cada apuesta. Como ejemplo, para un batch de tamaño 2:
+
+
+```text
+id_cliente1,nombre1,apellido1,documento1,nacimiento1,numero1\nid_cliente2,nombre2,apellido2,documento2,nacimiento2,numero2\n\n
+```
+
+El servidor responde, en caso exitoso, un mensaje "ok\n".
+
+El cliente vuelve a enviar batch al recibir esta respuesta hasta enviar un mensaje de fin "end\n\n". De esta manera,
+el servidor corta con la lectura de dicho cliente.
