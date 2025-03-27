@@ -11,7 +11,8 @@ def generate_docker_yaml(clients):
                 "image": "server:latest",
                 "entrypoint": "python3 /main.py",
                 "environment": [
-                    "PYTHONUNBUFFERED=1"
+                    "PYTHONUNBUFFERED=1",
+                    f"CLIENTS={clients}",
                 ],
                 "networks": ["testing_net"],
                 "volumes": ["./server/config.ini:/config.ini"]
