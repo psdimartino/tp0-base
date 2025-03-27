@@ -2,13 +2,13 @@ import errno
 import socket
 import logging
 import signal
+from time import sleep
 
-from common.utils import Bet, store_bets
+from common.utils import Bet, store_bets, has_won, load_bets
 from common.quiniela import Quiniela
 
-
 class Server:
-    def __init__(self, port, listen_backlog):
+    def __init__(self, port, listen_backlog, clients):
         # Set SIGTERM handler
         signal.signal(signal.SIGTERM, self.handle_sigterm)
         # Initialize server socket
@@ -16,6 +16,7 @@ class Server:
         self._server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self._server_socket.bind(('', port))
         self._server_socket.listen(listen_backlog)
+        self._clients = int(clients)
         self.quiniela = Quiniela()
 
     def run(self):
@@ -27,18 +28,47 @@ class Server:
         finishes, servers starts to accept new connections again
         """
 
-        while self.running:
+        agencies_that_finished = 0
+        sockets = []
+        while self.running and agencies_that_finished != self._clients:
+            logging.info(f"Waiting for new connections agencies_that_finished:{agencies_that_finished} self._clients{self._clients}")
             try:
                 client_sock = self.__accept_new_connection()
                 self.__handle_client_connection(client_sock)
+                agencies_that_finished += 1
+                sockets.append(client_sock)
             except socket.error as e:
                 if e.errno == errno.EBADF:
-                    logging.error(f'action: accept_new_connection | result: success | detail: closed connection')
+                    logging.error(f'action: accept_new_connection | result: error | detail: closed connection')
                 else:
                     logging.error(f'action: accept_new_connection | result: error | error: {e}')
+                for sock in sockets:
+                    sock.close()
                 return
 
+        logging.info(f'action: sorteo | result: success')
+
+        logging.info(f'action: close_sockets | result: in_progress')
+        for sock in sockets:
+            Server.send(sock, "end_bet_round")
+            sock.close()
+        logging.info(f'action: close_sockets | result: success')
+
+        agencies_that_finished = 0
+        bets = None
+        while self.running and agencies_that_finished != self._clients:
+            client_sock = self.__accept_new_connection()
+            agency = int(Server.recv(client_sock))
+            if bets is None:
+                logging.info(f'action: cargando_apuestas | result: in_progress')
+                bets = list(load_bets())
+                logging.info(f'action: cargando_apuestas | result: success | bets: {len(bets)}')
+            won_for_agency = [b for b in bets if b.agency == agency and has_won(b)]
+            Server.send(client_sock, str(len(won_for_agency)))
+            logging.info(f'action: envio_ganadores | result: success')
+            agencies_that_finished += 1
         self.__close_server_socket()
+        sleep(5)
 
     @staticmethod
     def __handle_client_connection(client_sock):
@@ -48,20 +78,19 @@ class Server:
         If a problem arises in the communication with the client, the
         client socket will also be closed
         """
-        bet_amount = 0
         try:
             while True:
                 msg = Server.recv(client_sock)
-                logging.info(f'action: mensaje_recibido | result: success | msg: {msg}')
+                # logging.info(f'action: mensaje_recibido | result: success | msg: {msg}')
                 if msg == "end":
                     break
+                logging.info(f'action: register_bets | result: in_progress')
                 Quiniela.register_bets(msg)
-                Server.send(client_sock, "ok\n")
-
+                logging.info(f'action: register_bets | result: success')
+                Server.send(client_sock, "ok")
         except OSError as e:
             logging.info(f'action: mensaje_recibido | result: fail | error: {e}')
-        finally:
-            client_sock.close()
+
 
     @staticmethod
     def recv(client_sock):

@@ -276,3 +276,15 @@ El servidor responde, en caso exitoso, un mensaje "ok\n".
 
 El cliente vuelve a enviar batch al recibir esta respuesta hasta enviar un mensaje de fin "end\n\n". De esta manera,
 el servidor corta con la lectura de dicho cliente.
+
+### Ejercicio N°7:
+
+Para resolver la respuesta conjunta de todos los threads se utilizó como solución esperar a que todos clientes terminen
+de enviar las apuestas para cerrar todos los sockets antes enviando un mensaje 
+`end_bet_round` a cada uno. Cada cliente espera este mensaje para luego enviar uno con su ID de agencia con
+un mensaje "1\n". Aprovechando que las conexiones se realizan secuencialmente, en la primera conexión se realiza el
+`load_bets` y luego se setea una variable que indica que ya fue procesado.
+
+Para cada cliente luego se envia un mensaje que indica la cantidad de ganadores. Como ejemplo para 5 ganadores se envia "5\n"
+
+Se agregaron sleep al final de la ejecucion del servidor y cliente por un bug en la lectura de los logs desde los tests.

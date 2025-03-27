@@ -33,6 +33,7 @@ type Client struct {
 	config  ClientConfig
 	conn    net.Conn
 	running bool
+	reader  *bufio.Reader
 }
 
 // NewClient Initializes a new client receiving the configuration
@@ -58,6 +59,7 @@ func (c *Client) createClientSocket() error {
 		)
 	}
 	c.conn = conn
+	c.reader = bufio.NewReader(c.conn)
 	return nil
 }
 
@@ -129,7 +131,10 @@ func (c *Client) StartClientLoop() {
 			msg = msg + c.config.ID + "," + line + "\n"
 			i++
 		}
-
+		if msg == "" {
+			// The max amount per batch is multiple of the bets in file
+			break
+		}
 		log.Infof("action: batch_leido | result: success | amount: %v", i)
 		err = c.sendMessage(msg)
 
@@ -149,21 +154,43 @@ func (c *Client) StartClientLoop() {
 		log.Infof("action: respuesta_recibida | result: success | response: %v", msg)
 
 	}
-	err = c.sendMessage("end")
+	log.Infof("action: send_finished | result: success | client_id: %v", c.config.ID)
+	err = c.sendMessage("end\n")
 	if err != nil {
 		log.Fatalf("action: terminar_envio | result: fail | msg: %v", line)
 		return
 	}
+	msg := c.receiveResponse()
+	log.Infof("action: fin_ronda_apuestas | result: success | response: %v", msg)
+
 	err = c.closeClientSocket()
+
 	if err != nil {
 		log.Fatalf("action: cerrar_socket | result: fail | msg: %v", line)
 		return
 	}
-	log.Infof("action: send_finished | result: success | client_id: %v", c.config.ID)
+	log.Infof("action: cerrar_socket | result: success")
+
+	err = c.createClientSocket()
+	if err != nil && scanner.Scan() == false {
+		log.Fatalf("action: create_socket | result: error | error: %v", err)
+		return
+	}
+
+	err = c.sendMessage(c.config.ID + "\n")
+	if err != nil {
+		return
+	}
+	log.Infof("action: agencia_enviada | result: success | agencia: %v", c.config.ID)
+
+	res := c.receiveResponse()
+	log.Infof("action: consulta_ganadores | result: success | cant_ganadores: %v", res)
+	log.Infof("action: fin_cliente | result: success")
+	time.Sleep(5 * time.Second)
 }
 
 func (c *Client) receiveResponse() string {
-	msg, err := bufio.NewReader(c.conn).ReadString('\n')
+	msg, err := c.reader.ReadString('\n')
 	if err != nil {
 		log.Errorf("action: receive_message | result: fail | client_id: %v | error: %v",
 			c.config.ID,
