@@ -163,20 +163,6 @@ func (c *Client) StartClientLoop() {
 	msg := c.receiveResponse()
 	log.Infof("action: fin_ronda_apuestas | result: success | response: %v", msg)
 
-	err = c.closeClientSocket()
-
-	if err != nil {
-		log.Fatalf("action: cerrar_socket | result: fail | msg: %v", line)
-		return
-	}
-	log.Infof("action: cerrar_socket | result: success")
-
-	err = c.createClientSocket()
-	if err != nil && scanner.Scan() == false {
-		log.Fatalf("action: create_socket | result: error | error: %v", err)
-		return
-	}
-
 	err = c.sendMessage(c.config.ID + "\n")
 	if err != nil {
 		return

@@ -288,3 +288,14 @@ un mensaje "1\n". Aprovechando que las conexiones se realizan secuencialmente, e
 Para cada cliente luego se envia un mensaje que indica la cantidad de ganadores. Como ejemplo para 5 ganadores se envia "5\n"
 
 Se agregaron sleep al final de la ejecucion del servidor y cliente por un bug en la lectura de los logs desde los tests.
+
+### Ejercicio N°8:
+
+Se remueve la sincronización utilizando sockets distintos. Para esta seccion se utilizan 3 mecanismos de sincronizacion:
+
+1. locks: La clase `quiniela` crea un wrapper sobre los métodos `store_bets` y `load_bets` que no son thread safe utilizando
+un mismo lock.
+2. event: Mecanismo para signaling entre threads. Una vez que fueron procesadas las apuentas se hace el signaling a threads
+que estan esperando para que continuen con el procesamiento de los ganadores
+3. barrier: Se crea una barrera esperando que todos los clientes terminen con el procesamiento, luego se avisa a todos los threads
+de dicho evento y finalmente estos pueden consultar por los resultados.
